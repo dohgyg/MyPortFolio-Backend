@@ -17,6 +17,7 @@ const signin = async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
       },
     });
   } catch (err) {
@@ -43,4 +44,13 @@ const hasAuthorization = (req, res, next) => {
   }
   next();
 };
-export default { signin, signout, requireSignin, hasAuthorization };
+
+const isAdmin = (req, res, next) => {
+  if (req.auth && req.auth.role === "admin") {
+    return next();
+  }
+  return res.status(403).json({
+    error: "Admin resource. Access denied.",
+  });
+};
+export default { signin, signout, requireSignin, hasAuthorization, isAdmin };

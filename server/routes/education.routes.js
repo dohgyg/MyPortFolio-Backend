@@ -1,22 +1,76 @@
-import { Router } from 'express';
-import Education from '../models/education.model.js';
+import { Router } from "express";
+import Education from "../models/education.model.js";
+import authCtrl from "../controllers/auth.controller.js";
 
 const router = Router();
 
-router.post('/', async (req, res) => res.status(201).json(await Education.create(req.body)));
-router.get('/', async (_req, res) => res.json(await Education.find()));
-router.get('/:id', async (req, res) => res.json(await Education.findById(req.params.id)));
-router.put('/:id', async (req, res) => {
-  const updated = await Education.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  res.json(updated);
+// get list ( all users)
+router.get("/", async (req, res) => {
+  try {
+    const list = await Education.find();
+    res.json(list);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
-router.delete('/:id', async (req, res) => {
-  await Education.findByIdAndDelete(req.params.id);
-  res.json({ message: 'Education deleted' });
+
+// Post only admin
+router.post(
+  "/",
+  authCtrl.requireSignin,
+  authCtrl.isAdmin,
+  async (req, res) => {
+    try {
+      const created = await Education.create(req.body);
+      res.status(201).json(created);
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  }
+);
+
+// Get 1 item(all users)
+router.get("/:id", async (req, res) => {
+  try {
+    const edu = await Education.findById(req.params.id);
+    res.json(edu);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
-router.delete('/', async (_req, res) => {
-  const result = await Education.deleteMany();
-  res.json({ deleted: result.deletedCount });
-});
+
+// Update (admin)
+router.put(
+  "/:id",
+  authCtrl.requireSignin,
+  authCtrl.isAdmin,
+  async (req, res) => {
+    try {
+      const updated = await Education.findByIdAndUpdate(
+        req.params.id,
+        req.body,
+        { new: true }
+      );
+      res.json(updated);
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  }
+);
+
+// Delete (admin)
+router.delete(
+  "/:id",
+  authCtrl.requireSignin,
+  authCtrl.isAdmin,
+  async (req, res) => {
+    try {
+      await Education.findByIdAndDelete(req.params.id);
+      res.json({ message: "Education deleted" });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  }
+);
 
 export default router;
